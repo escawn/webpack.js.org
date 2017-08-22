@@ -5,6 +5,7 @@ contributors:
   - skipjack
   - michael-ciniawsky
   - TheDutchCoder
+  - sudarsangp
 ---
 
 如果你是从开始一直遵循着指南的示例，现在会有一个小项目，显示 "Hello webpack"。现在我们尝试整合一些其他资源，比如图像，看看 webpack 如何处理。
@@ -43,7 +44,7 @@ npm install --save-dev style-loader css-loader
 __webpack.config.js__
 
 ``` diff
-  var path = require('path');
+  const path = require('path');
 
   module.exports = {
     entry: './src/index.js',
@@ -103,7 +104,7 @@ __src/index.js__
   function component() {
     var element = document.createElement('div');
 
-    // Lodash, now imported by this script
+    // lodash 是由当前 script 脚本 import 导入进来的
     element.innerHTML = _.join(['Hello', 'webpack'], ' ');
 +   element.classList.add('hello');
 
@@ -150,7 +151,7 @@ npm install --save-dev file-loader
 __webpack.config.js__
 
 ``` diff
-  var path = require('path');
+  const path = require('path');
 
   module.exports = {
     entry: './src/index.js',
@@ -268,7 +269,7 @@ T> 合乎逻辑下一步是，压缩和优化您的图像。查看 [image-webpac
 __webpack.config.js__
 
 ``` diff
-  var path = require('path');
+  const path = require('path');
 
   module.exports = {
     entry: './src/index.js',
@@ -382,7 +383,7 @@ npm install --save-dev csv-loader xml-loader
 __webpack.config.js__
 
 ``` diff
-  var path = require('path');
+  const path = require('path');
 
   module.exports = {
     entry: './src/index.js',
@@ -542,7 +543,7 @@ __project__
 __webpack.config.js__
 
 ``` diff
-  var path = require('path');
+  const path = require('path');
 
   module.exports = {
     entry: './src/index.js',
@@ -591,7 +592,7 @@ __webpack.config.js__
 __src/index.js__
 
 ``` diff
-- import _ from 'lodash';
+  import _ from 'lodash';
 - import './style.css';
 - import Icon from './icon.png';
 - import Data from './data.xml';
@@ -600,7 +601,7 @@ __src/index.js__
     var element = document.createElement('div');
 -
 -   // Lodash，现在通过 script 标签导入
--   element.innerHTML = _.join(['Hello', 'webpack'], ' ');
+    element.innerHTML = _.join(['Hello', 'webpack'], ' ');
 -   element.classList.add('hello');
 -
 -   // 将图像添加到我们已有的 div 中。
@@ -610,7 +611,6 @@ __src/index.js__
 -   element.appendChild(myIcon);
 -
 -   console.log(Data);
-+   element.innerHTML = _.join(['Hello', 'webpack'], ' ');
 
     return element;
   }

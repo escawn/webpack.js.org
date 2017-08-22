@@ -200,14 +200,12 @@ filename: "[chunkhash].bundle.js"
 
 可以使用以下替换模板字符串（通过 webpack 内部的[`TemplatedPathPlugin`][`TemplatedPathPlugin`](https://github.com/webpack/webpack/blob/master/lib/TemplatedPathPlugin.js)）：
 
-| Template    | Description |
-| ----------- | ----------- |
+| 模板 | 描述 |
+| ----------- | ----------------------------------------------------------------------------------- |
 | [hash]      | 模块标识符(module identifier)的 hash |
 | [chunkhash] | chunk 内容的 hash |
 | [name]      | 模块名称 |
 | [id]        | 模块标识符(module identifier) |
-| [file]      | 模块文件名称 |
-| [filebase]  | 模块 [basename](https://nodejs.org/api/path.html#path_path_basename_path_ext) |
 | [query]     | 模块的 query，例如，文件名 `?` 后面的字符串 |
 
 `[hash]` 和 `[chunkhash]` 的长度可以使用 `[hash:16]`（默认为20）来指定。或者，通过指定[`output.hashDigestLength`](#output-hashdigestlength) 在全局配置长度。
@@ -293,6 +291,8 @@ JSONP 函数用于异步加载(async load) chunk，或者拼接多个初始 chun
 
 `string`
 
+`string` 或 `object`（从 webpack 3.1.0 开始；用于 `libraryTarget: "umd"`）
+
 在编写一个导出值的 JavaScript library 时，可以使用下面的 `library` 和 `libraryTarget`，导出值可以作为其他代码的依赖。传入 library 名称的字符串：
 
 ``` js
@@ -303,14 +303,51 @@ library 名称取决于 [`output.libraryTarget`](#output-librarytarget) 选项�
 
 注意，`output.libraryTarget` 的默认值是 var。这意味着，如果使用 `output.libraryTarget` 的默认值，`output.library` 会将值作为变量声明导出（当使用 script 标签时，其执行后在全局作用域可用）。
 
-有关 `output.library` 以及 `ouput.libraryTarget` 详细信息，请查看[创建 library 指南](/guides/author-libraries)。
+有关 `output.library` 以及 `output.libraryTarget` 详细信息，请查看[创建 library 指南](/guides/author-libraries)。
 
 
 ## `output.libraryExport`
 
 `string` or `string[]` (since webpack 3.0.0)
 
-Allows to select an export for the library.
+> Default: `_entry_return_`
+
+Configure which module or modules will be exposed via the `libraryTarget`.
+
+The default value `_entry_return_` is the namespace or default module returned by your entry file.
+
+The examples below demonstrate the effect of this config when using `libraryTarget: "var"`, but any target may be used.
+
+The following configurations are supported:
+
+`libraryExport: "default"` - The **default export of your entry point** will be assigned to the library target:
+
+```javascript
+// if your entry has a default export of `MyDefaultModule`
+var MyDefaultModule = _entry_return_.default;
+
+// your users will use your library like:
+MyDefaultModule.doSomething();
+```
+
+`libraryExport: "MyModule"` - The **specified module** will be assigned to the library target:
+
+```javascript
+// if your entry exports a module `MyModule`
+var MyModule = _entry_return_.MyModule;
+
+// your users will use your library like:
+MyModule.doSomething();
+```
+
+`libraryExport: ["MyModule", "MySubModule"]` - The array is interpreted as a **path to a module** to be assigned to the library target:
+
+```javascript
+// if your entry exports `MyModule` which in turn exports `MySubModule`
+var MySubModule = _entry_return_.MyModule.MySubModule;
+
+MySubModule.doSomething();
+```
 
 
 ## `output.libraryTarget`
@@ -417,7 +454,6 @@ require(['MyLibrary'], function(MyLibrary) {
 });
 ```
 
-
 `libraryTarget: "umd"` - 这是一种可以将你的 library 能够在所有的模块定义下都可运行的方式（并且导出的完全不是模块）。它将在 CommonJS, AMD 环境下运行，或将模块导出到 global 下的变量。了解更多请查看 [UMD 仓库](https://github.com/umdjs/umd)。
 
 在这个例子中，你需要 `library` 属性来命名你的模块：
@@ -446,20 +482,33 @@ output: {
 });
 ```
 
+从 webpack 3.1.0 开始，你可以将 `library` 指定为一个对象，用于对每个 target 起不同的名称：
+
+```javascript
+output: {
+  library: {
+    root: "MyLibrary",
+    amd: "my-library",
+    commonjs: "my-common-library"
+  },
+  libraryTarget: "umd"
+}
+```
+
 模块验证 library。
 
 
 `libraryTarget: "assign"` - 这里 webpack 会轻率地产生隐含的全局变量。
 
-```javascript
+``` javascript
 MyLibrary = _entry_return_;
 ```
-请注意，如果前面没有定义 `MyLibrary`，则 library 将被设置在全局范围内。
 
+请注意，如果前面没有定义 `MyLibrary`，则 library 将被设置在全局范围内。
 
 `libraryTarget: "jsonp"` - 这将把入口起点的返回值，包裹到一个 jsonp 包装容器中
 
-```javascript
+``` javascript
 MyLibrary(_entry_return_);
 ```
 
@@ -566,7 +615,12 @@ publicPath: "", // 相对于 HTML 页面（目录相同）
 
 配置 source map 的命名方式。默认使用 `"[file].map"`。
 
-技术上看，对于 chunk 生成的 SourceMap，可以使用 `[name]`, `[id]`, `[hash]` 和 `[chunkhash]` [占位符(placeholder)](#output-filename)。除了替换这些占位符，`[file]` 占位符还可以被替换为原始文件(original file)的文件名。建议只使用 `[file]` 占位符，因为其他占位符在非 chunk 文件生成的 SourceMap 时不起作用。最好保持默认。
+可以使用 [#output-filename](#output-filename) 中的 `[name]`, `[id]`, `[hash]` 和 `[chunkhash]` 替换符号。除此之外，还可以使用以下替换符号。`[file]` 占位符会被替换为原始文件的文件名。我们建议__只使用 `[file]` 占位符__，因为其他占位符在非 chunk 文件(non-chunk files)生成的 SourceMap 时不起作用。
+
+| 模板 | 描述 |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| [file] | 模块文件名称 |
+| [filebase] | 模块 [basename](https://nodejs.org/api/path.html#path_path_basename_path_ext) |
 
 
 ## `output.sourcePrefix`

@@ -19,6 +19,8 @@ contributors:
   - jakearchibald
   - TheDutchCoder
   - rouzbeh84
+  - shaodahong
+  - sudarsangp
 ---
 
 T> 本指南扩展了[起步](/guides/getting-started)和[管理构建文件](/guides/output-management)中提供的示例。请确保您至少已熟悉其中提供的示例。
@@ -34,7 +36,7 @@ T> 本指南扩展了[起步](/guides/getting-started)和[管理构建文件](/g
 
 ## Entry Points
 
-This is by far the easiest, and most intuitive, way to split code. However, it is more manual and has a some pitfalls we will go over. Let's take a look at how we might split another module from the main bundle:
+This is by far the easiest, and most intuitive, way to split code. However, it is more manual and has some pitfalls we will go over. Let's take a look at how we might split another module from the main bundle:
 
 __project__
 
@@ -168,6 +170,8 @@ T> The [`CommonsChunkPlugin`](/plugins/commons-chunk-plugin) is also used to spl
 
 Two similar techniques are supported by webpack when it comes to dynamic code splitting. The first and more preferable approach is use to the [`import()` syntax](/api/module-methods#import-) that conforms to the [ECMAScript proposal](https://github.com/tc39/proposal-dynamic-import) for dynamic imports. The legacy, webpack-specific approach is to use [`require.ensure`](/api/module-methods#require-ensure). Let's try using the first of these two approaches...
 
+W> `import()` calls use [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise). If you want to support older browsers that lack `Promise` support (e.g. Internet Explorer), you'll need to include a `Promise` polyfill _before_ your primary bundles.
+
 Before we start, let's remove the extra [`entry`](/concepts/entry-points/) and [`CommonsChunkPlugin`](/plugins/commons-chunk-plugin) from our config as they won't be needed for this next demonstration:
 
 __webpack.config.js__
@@ -200,7 +204,7 @@ __webpack.config.js__
   };
 ```
 
-We'll also update our project to remove the now unused files:
+Note the use of `chunkFilename`, which determines the name of non-entry chunk files. For more information on `chunkFilename`, see [output documentation](/configuration/output/#output-chunkfilename). We'll also update our project to remove the now unused files:
 
 __project__
 
@@ -286,6 +290,15 @@ __src/index.js__
     document.body.appendChild(component);
   });
 ```
+
+
+## Bundle Analysis
+
+Once you start splitting your code, it can be useful to analyze the output to check where modules have ended up. The [official analyze tool](https://github.com/webpack/analyse) is a good place to start. There are some other community-supported options out there as well:
+
+- [webpack-chart](https://alexkuz.github.io/webpack-chart/): Interactive pie chart for webpack stats.
+- [webpack-visualizer](https://chrisbateman.github.io/webpack-visualizer/): Visualize and analyze your bundles to see which modules are taking up space and which might be duplicates.
+- [webpack-bundle-analyzer](https://github.com/th0r/webpack-bundle-analyzer): A plugin and CLI utility that represents bundle content as convenient interactive zoomable treemap.
 
 
 ## Next Steps
